@@ -9,6 +9,7 @@ class mel_archivage extends rcube_plugin
      */
     public $task = 'mail|settings';
 
+
     // RFC4155: mbox date format
     const MBOX_DATE_FORMAT = 'D M d H:i:s Y';
 
@@ -55,38 +56,54 @@ class mel_archivage extends rcube_plugin
 
     public function traitement_archivage()
     {
-        $nbJours = $_GET['nb_jours'];
-        $datetime1 = new DateTime(date('Y-m-d'));
+        $delete_mails = false;
+
+
+        $nbJours = rcube_utils::get_input_value('nb_jours', rcube_utils::INPUT_GET);
+        $dateActuelle = new DateTime(date('Y-m-d'));
 
         $rcmail = rcmail::get_instance();
         $storage = $rcmail->get_storage();
         // $mbox = self::restore_bal();
 
 
-        $threading = (bool) $storage->get_threading();
-        $old_count = $storage->count(null, $threading ? 'THREADS' : 'ALL');
+        $storage->set_threading(false);
 
         $mbox           = $storage->get_folder();
-        $msg_count      = $storage->count(null, $threading ? 'THREADS' : 'ALL');
+        $msg_count      = $storage->count();
         $exists         = $storage->count($mbox, 'EXISTS', true);
         $page_size      = $storage->get_pagesize();
         $pages          = ceil($msg_count / $page_size);
-        
+
         $message_uid = array();
         $messageset = array();
+        $break = false;
         for ($page = 1; $page <= $pages; $page++) {
-            foreach ($storage->list_messages($mbox, $page, 'date', 'ASC') as $message) {
-                $datetime2 = new DateTime(date("Y-m-d", strtotime($message->date)));
-                $interval = $datetime1->diff($datetime2);
-                $interval = $interval->format('%a');
-                if ($interval > $nbJours) {
-                    $message_uid[] = $message->uid;
-                    $messageset[$message->folder] = $message_uid;
+            if (!$break) {
+                foreach ($storage->list_messages($mbox, $page, 'date', 'ASC') as $message) {
+                    $dateMail = new DateTime(date("Y-m-d", strtotime($message->date)));
+                    $interval = $dateActuelle->diff($dateMail);
+                    $interval = $interval->format('%a');
+                    if ($interval > $nbJours) {
+                        $message_uid[] = $message->uid;
+                        $messageset[$message->folder] = $message_uid;
+                    } else {
+                        $break = true;
+                        break;
+                    }
                 }
+            } else {
+                break;
             }
         }
 
         $this->_download_messages($messageset);
+
+        if ($delete_mails) {
+            foreach ($message_uid as $value) {
+                $storage->delete_message($value);
+            }
+        }
 
         $rcmail->output->send('mel_archivage.mel_archivage');
     }
@@ -262,6 +279,6 @@ class mel_archivage extends rcube_plugin
             unlink($tmpfn);
         }
 
-        exit;
+        // exit;
     }
 }
