@@ -97,7 +97,7 @@ class mel_archivage extends rcube_plugin
         $this->_download_messages($messageset);
 
         //Créer un folder "Mes messages archivés" si non existant
-        if ($folder != null) {
+        if (isset($folder)) {
             $delimiter = $storage->get_hierarchy_delimiter();
 
             $list_folders = $storage->list_folders('', $this->archive_folder . '*', 'mail', null, true);
