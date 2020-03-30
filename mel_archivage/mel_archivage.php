@@ -100,7 +100,7 @@ class mel_archivage extends rcube_plugin
         if (isset($folder)) {
             $delimiter = $storage->get_hierarchy_delimiter();
 
-            $list_folders = $storage->list_folders('', $this->archive_folder . '*', 'mail', null, true);
+            $list_folders = $storage->list_folders('', $folder . '*', 'mail', null, true);
 
             //Si le dossier n'existe pas
             if (!in_array($folder, $list_folders)) {
