@@ -84,6 +84,7 @@ class mel_archivage extends rcube_plugin
                     $interval = $interval->format('%a');
                     if ($interval > $nbJours) {
                         $message_uid[] = $message->uid;
+                        $messageset[$message->folder] = $message_uid;
                     } else {
                         $break = true;
                         break;
