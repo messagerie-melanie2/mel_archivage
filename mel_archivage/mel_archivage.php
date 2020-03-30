@@ -29,7 +29,7 @@ class mel_archivage extends rcube_plugin
         $rcmail = rcmail::get_instance();
 
         $this->load_config();
-        $this->charset = $rcmail->config->get('zipdownload_charset', RCUBE_CHARSET);
+        $this->charset = $rcmail->config->get('mel_archivage_charset', RCUBE_CHARSET);
 
 
         $this->include_script('mel_archivage.js');
@@ -55,17 +55,15 @@ class mel_archivage extends rcube_plugin
     }
 
     public function traitement_archivage()
-    {
-        $delete_mails = false;
-
-
+    {        
         $nbJours = rcube_utils::get_input_value('nb_jours', rcube_utils::INPUT_GET);
         $dateActuelle = new DateTime(date('Y-m-d'));
-
+        
         $rcmail = rcmail::get_instance();
         $storage = $rcmail->get_storage();
         // $mbox = self::restore_bal();
-
+        
+        $folder = $rcmail->config->get('mel_archivage_folder');
 
         $storage->set_threading(false);
 
@@ -86,7 +84,6 @@ class mel_archivage extends rcube_plugin
                     $interval = $interval->format('%a');
                     if ($interval > $nbJours) {
                         $message_uid[] = $message->uid;
-                        $messageset[$message->folder] = $message_uid;
                     } else {
                         $break = true;
                         break;
@@ -99,10 +96,24 @@ class mel_archivage extends rcube_plugin
 
         $this->_download_messages($messageset);
 
-        if ($delete_mails) {
-            foreach ($message_uid as $value) {
-                $storage->delete_message($value);
+        //Créer un folder "Mes messages archivés" si non existant
+        if ($folder != null) {
+            $delimiter = $storage->get_hierarchy_delimiter();
+
+            $list_folders = $storage->list_folders('', $this->archive_folder . '*', 'mail', null, true);
+
+            //Si le dossier n'existe pas
+            if (!in_array($folder, $list_folders)) {
+                $path = explode($delimiter, $folder);
+
+                for ($i=0; $i<count($path); $i++) {
+                    $_folder = implode($delimiter, array_slice($path, 0, $i+1));
+                    if (!in_array($_folder, $list_folders)) {
+                        $storage->create_folder($_folder, true);
+                    }
+                }
             }
+            $storage->move_message($message_uid,$folder);
         }
 
         $rcmail->output->send('mel_archivage.mel_archivage');
@@ -195,7 +206,7 @@ class mel_archivage extends rcube_plugin
         $imap      = $rcmail->get_storage();
         $mode      = rcube_utils::get_input_value('_mode', rcube_utils::INPUT_POST);
         $temp_dir  = $rcmail->config->get('temp_dir');
-        $tmpfname  = tempnam($temp_dir, 'zipdownload');
+        $tmpfname  = tempnam($temp_dir, 'mel_archivage');
         $tempfiles = array($tmpfname);
         $folders   = count($messageset) > 1;
 
@@ -240,7 +251,7 @@ class mel_archivage extends rcube_plugin
                     fwrite($tmpfp, $header);
 
                     // Use stream filter to quote "From " in the message body
-                    stream_filter_register('mbox_filter', 'zipdownload_mbox_filter');
+                    stream_filter_register('mbox_filter', 'mel_archivage_mbox_filter');
                     $filter = stream_filter_append($tmpfp, 'mbox_filter');
                     $imap->get_raw_body($uid, $tmpfp);
                     stream_filter_remove($filter);
