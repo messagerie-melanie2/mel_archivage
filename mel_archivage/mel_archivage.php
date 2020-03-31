@@ -100,6 +100,11 @@ class mel_archivage extends rcube_plugin
         if (isset($folder)) {
             $delimiter = $storage->get_hierarchy_delimiter();
 
+            // Utiliser le driver mel ?
+            if (class_exists('driver_mel')) {
+                $folder = driver_mel::get_instance()->getMboxFromBalp($rcmail->plugins->get_plugin('mel')->get_user_bal()) . $delimiter . $folder;
+            }
+
             $list_folders = $storage->list_folders('', $folder . '*', 'mail', null, true);
 
             //Si le dossier n'existe pas
@@ -116,7 +121,7 @@ class mel_archivage extends rcube_plugin
             $storage->move_message($message_uid,$folder);
         }
 
-        $rcmail->output->send('mel_archivage.mel_archivage');
+        exit;
     }
 
     // public function restore_bal() {
@@ -289,7 +294,5 @@ class mel_archivage extends rcube_plugin
         foreach ($tempfiles as $tmpfn) {
             unlink($tmpfn);
         }
-
-        exit;
     }
 }
