@@ -24,7 +24,7 @@ if (window.rcmail) {
             changeDatepicker(this.value);
         })
 
-    })
+    });
 }
 
 function changeInput(datepicker) {
@@ -45,7 +45,7 @@ function changeDatepicker(nbJours) {
 
 rcube_webmail.prototype.plugin_archiver = function () {
     var frame = $('<iframe>').attr('id', 'managelabelsframe')
-        .attr('src', rcmail.url('settings/plugin.mel_archivage') + '&_framed=1')
+        .attr('src', rcmail.url('settings/plugin.mel_archivage', {_mbox: this.env.mailbox, _account: this.env.account}) + '&_framed=1')
         .attr('frameborder', '0')
         .appendTo(document.body);
 
@@ -56,15 +56,15 @@ rcube_webmail.prototype.plugin_archiver = function () {
         resizable: false,
         closeOnEscape: true,
         title: '',
+        closeText: rcmail.get_label('close'),
         close: function () {
             frame.dialog('destroy').remove();
-            window.location.reload();
         },
         buttons: buttons,
-        width: 290,
-        height: 400,
+        width: 400,
+        height: 410,
         rcmail: rcmail
-    }).width(260);
+    }).width(380);
 };
 
 

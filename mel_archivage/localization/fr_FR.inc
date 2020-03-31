@@ -2,9 +2,10 @@
 
 $labels = array();
 $labels['null'] = ' ';
-$labels['title'] = 'Archiver des courriels';
+$labels['title'] = 'Archiver les courriels de ce dossier';
 $labels['archive'] = 'Archiver';
 $labels['date'] = 'Date : ';
 $labels['nb_jours'] = 'Nombre de jours : ';
+$labels['description'] = "Comment fonctionne l'archivage : Sélectionnez un nombre de jours ou une date, tous les messages du dossier courant antérieur à cette date seront téléchargés sur votre poste. Ces messages ne seront pas supprimés de votre messagerie mais déplacés dans un dossier Messages archivés. Une fois que l'archive téléchargée vous convient, vous pouvez supprimer les messages contenus dans Messages archivés pour libérer de la place.";
 
 ?>

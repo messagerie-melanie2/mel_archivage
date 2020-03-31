@@ -31,7 +31,6 @@ class mel_archivage extends rcube_plugin
         $this->load_config();
         $this->charset = $rcmail->config->get('mel_archivage_charset', RCUBE_CHARSET);
 
-
         $this->include_script('mel_archivage.js');
         $this->add_texts('localization', true);
 
@@ -50,7 +49,8 @@ class mel_archivage extends rcube_plugin
     public function request_action()
     {
         $rcmail = rcmail::get_instance();
-
+        $rcmail->output->set_env('mailbox', rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_GET));
+        $rcmail->output->set_env('account', rcube_utils::get_input_value('_account', rcube_utils::INPUT_GET));
         $rcmail->output->send('mel_archivage.mel_archivage');
     }
 
@@ -69,7 +69,6 @@ class mel_archivage extends rcube_plugin
 
         $mbox           = $storage->get_folder();
         $msg_count      = $storage->count();
-        $exists         = $storage->count($mbox, 'EXISTS', true);
         $page_size      = $storage->get_pagesize();
         $pages          = ceil($msg_count / $page_size);
 
@@ -163,7 +162,7 @@ class mel_archivage extends rcube_plugin
             $filename = addcslashes($filename, '"');
 
         // send download headers
-        header("Content-Type: application/octet-stream");
+        header("Content-Type: application/zip");
         if ($browser->ie) {
             header("Content-Type: application/force-download");
         }
@@ -259,7 +258,7 @@ class mel_archivage extends rcube_plugin
                     fwrite($tmpfp, "\r\n");
                 } else { // maildir
                     $subject = rcube_mime::decode_header($headers->subject, $headers->charset);
-                    $subject = $this->_filename_from_subject(mb_substr($subject, 0, 16));
+                    $subject = $this->_filename_from_subject(mb_substr($subject, 0, 32));
                     $subject = $this->_convert_filename($subject);
 
                     $disp_name = $path . $uid . ($subject ? " $subject" : '') . '.eml';
@@ -291,6 +290,6 @@ class mel_archivage extends rcube_plugin
             unlink($tmpfn);
         }
 
-        // exit;
+        exit;
     }
 }
