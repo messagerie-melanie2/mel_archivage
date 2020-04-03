@@ -16,5 +16,5 @@ $config['mel_archivage_selection'] = true;
 // ASCII//TRANSLIT//IGNORE pour ignorer les accents
 $config['mel_archivage_charset'] = 'ASCII//TRANSLIT//IGNORE';
 
-$config['mel_archivage_folder'] = "Messages archiv&AOk-s";
+// $config['mel_archivage_folder'] = "Messages archiv&AOk-s";
 ?>

@@ -11,8 +11,8 @@
 	</h1>
 	<div id="archivage-details" class="boxcontent">
 		<roundcube:object name="mel_archivage" />
-		<form name="valide" target="_blank" action="" method="get" class="propform" id="form_archivage">
-			<fieldset>
+		<form name="valide" action="" method="get" class="propform" id="form_archivage">
+			<fieldset id="fieldset">
 				<input type="hidden" value="settings" name="_task">
 				<input type="hidden" value="plugin.mel_archivage_traitement" name="_action">
 				<div>
@@ -23,9 +23,10 @@
 					<label for="archivage_date" style="display: block; width: 120px; float: left;"><roundcube:label name="mel_archivage.date" /></label>
 					<input type="text" id="archivage_date"/>
 				</div>
+				<div id="nb_mails"></div>
 			</fieldset>
 			
-			<input type="submit" class="button mainaction" value="<roundcube:label name="save" />" />
+			<input id="submit_archivage" type="submit" class="button mainaction" value="<roundcube:label name="save" />" />
 		</form>
 	</div>
 </body>

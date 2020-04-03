@@ -36,6 +36,9 @@ class mel_archivage extends rcube_plugin
 
         $this->register_action('plugin.mel_archivage', array($this, 'request_action'));
         $this->register_action('plugin.mel_archivage_traitement', array($this, 'traitement_archivage'));
+        $this->register_action('plugin.mel_archivage_avancement', array($this, 'archivage_avancement'));
+        $this->register_action('plugin.mel_archivage_reset', array($this, 'archivage_reset'));
+
         if ($rcmail->task == 'settings' || $rcmail->task == 'mail') {
             if ($rcmail->config->get('ismobile', false)) {
                 $skin_path = 'skins/mel_larry_mobile';
@@ -54,15 +57,46 @@ class mel_archivage extends rcube_plugin
         $rcmail->output->send('mel_archivage.mel_archivage');
     }
 
+    
+    public function archivage_reset()
+    {
+        $rcmail  = rcmail::get_instance();
+        $folder = $rcmail->config->get('mel_archivage_folder');
+
+        $_SESSION['mel_archivage'] = [
+            $folder => [
+                'nb_mails' => 0,
+                'nb_mails_traites' => 0,
+                'start' => 0,
+            ]
+        ];
+        exit;
+    }
+
+    public function archivage_avancement()
+    {
+        header("Content-Type: application/json; charset=" . RCUBE_CHARSET);
+
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_GET);
+
+        $rcmail  = rcmail::get_instance();
+        $folder = $rcmail->config->get('mel_archivage_folder');
+
+        $test = $rcmail->session->read('mel_archivage');
+        $result = array('action' => 'plugin.mel_archivage_avancement', 'data' => $test);
+        echo json_encode($result);
+        exit;
+    }
+
     public function traitement_archivage()
-    {        
+    {
         $nbJours = rcube_utils::get_input_value('nb_jours', rcube_utils::INPUT_GET);
         $dateActuelle = new DateTime(date('Y-m-d'));
-        
+
         $rcmail = rcmail::get_instance();
         $storage = $rcmail->get_storage();
         // $mbox = self::restore_bal();
-        
+
         $folder = $rcmail->config->get('mel_archivage_folder');
 
         $storage->set_threading(false);
@@ -71,6 +105,8 @@ class mel_archivage extends rcube_plugin
         $msg_count      = $storage->count();
         $page_size      = $storage->get_pagesize();
         $pages          = ceil($msg_count / $page_size);
+
+        $count = 0;
 
         $message_uid = array();
         $messageset = array();
@@ -84,6 +120,8 @@ class mel_archivage extends rcube_plugin
                     if ($interval > $nbJours) {
                         $message_uid[] = $message->uid;
                         $messageset[$message->folder] = $message_uid;
+                        $count = 0;
+                        $rcmail->session->write('mel_archivage', $count);
                     } else {
                         $break = true;
                         break;
@@ -94,6 +132,8 @@ class mel_archivage extends rcube_plugin
             }
         }
 
+        $_SESSION['mel_archivage'][$folder]['start'] = time();
+            
         $this->_download_messages($messageset);
 
         //Créer un folder "Mes messages archivés" si non existant
@@ -111,14 +151,14 @@ class mel_archivage extends rcube_plugin
             if (!in_array($folder, $list_folders)) {
                 $path = explode($delimiter, $folder);
 
-                for ($i=0; $i<count($path); $i++) {
-                    $_folder = implode($delimiter, array_slice($path, 0, $i+1));
+                for ($i = 0; $i < count($path); $i++) {
+                    $_folder = implode($delimiter, array_slice($path, 0, $i + 1));
                     if (!in_array($_folder, $list_folders)) {
                         $storage->create_folder($_folder, true);
                     }
                 }
             }
-            $storage->move_message($message_uid,$folder);
+            $storage->move_message($message_uid, $folder);
         }
 
         exit;
@@ -200,6 +240,16 @@ class mel_archivage extends rcube_plugin
         return trim($str, " ./_");
     }
 
+    private function _calcul_temps() {
+        $rcmail  = rcmail::get_instance();
+        $folder = $rcmail->config->get('mel_archivage_folder');
+
+        $start = $_SESSION['mel_archive'][$folder]['start'];
+        $temps_traitement = $_SESSION['mel_archive'][$folder]['temps_traitement'];
+
+        
+    }
+
     /**
      * Helper method to packs all the given messages into a zip archive
      *
@@ -214,6 +264,9 @@ class mel_archivage extends rcube_plugin
         $tmpfname  = tempnam($temp_dir, 'mel_archivage');
         $tempfiles = array($tmpfname);
         $folders   = count($messageset) > 1;
+
+        $folder = $rcmail->config->get('mel_archivage_folder');
+        $count = 0;
 
         // @TODO: file size limit
 
@@ -274,6 +327,13 @@ class mel_archivage extends rcube_plugin
                     $tempfiles[] = $tmpfn;
                     fclose($tmpfp);
                     $zip->addFile($tmpfn, $disp_name);
+
+                    $count++;
+
+                    $_SESSION['mel_archivage'][$folder]['nb_mails_traites'] = $count;
+                    $_SESSION['mel_archivage'][$folder]['temps_traitement'] = time();
+                    
+                    $this->_calcul_temps();
                 }
             }
         }
@@ -295,4 +355,6 @@ class mel_archivage extends rcube_plugin
             unlink($tmpfn);
         }
     }
+
+   
 }

@@ -12,7 +12,7 @@ if (window.rcmail) {
             }
         };
 
-        $('#archivage_date').datepicker({ maxDate: 0,  dateFormat: 'dd/mm/yy' })
+        $('#archivage_date').datepicker({ maxDate: 0, dateFormat: 'dd/mm/yy' })
             .change(function () {
                 changeInput(this.value);
             });
@@ -24,13 +24,28 @@ if (window.rcmail) {
             changeDatepicker(this.value);
         })
 
+
+        function nbMails() {
+            rcmail.http_get('settings/plugin.mel_archivage_avancement', {
+                _mbox: rcmail.env.mailbox,
+            });
+            rcmail.addEventListener('responseafterplugin.mel_archivage_avancement', function (evt) {
+                $('#nb_mails').text(evt.response.data + '/' + evt.response.data);
+            });
+        }
+        
+        $('#form_archivage').submit(function () {
+            rcmail.http_get('settings/plugin.mel_archivage_reset');
+            setInterval(nbMails, 2000);
+        })
+
     });
 }
 
 function changeInput(datepicker) {
     let start_date = $.datepicker.parseDate("dd/mm/yy", datepicker);
     let today = new Date();
-    
+
     let TimeJours = today.getTime() - start_date.getTime();
     let nbJours = TimeJours / (1000 * 3600 * 24);
     $('#nb_jours').val(Math.floor(nbJours));
@@ -45,7 +60,7 @@ function changeDatepicker(nbJours) {
 
 rcube_webmail.prototype.plugin_archiver = function () {
     var frame = $('<iframe>').attr('id', 'managelabelsframe')
-        .attr('src', rcmail.url('settings/plugin.mel_archivage', {_mbox: this.env.mailbox, _account: this.env.account}) + '&_framed=1')
+        .attr('src', rcmail.url('settings/plugin.mel_archivage', { _mbox: this.env.mailbox, _account: this.env.account }) + '&_framed=1')
         .attr('frameborder', '0')
         .appendTo(document.body);
 
@@ -67,7 +82,3 @@ rcube_webmail.prototype.plugin_archiver = function () {
     }).width(380);
 };
 
-
-function button_archivage() {
-    alert('hello');
-}
