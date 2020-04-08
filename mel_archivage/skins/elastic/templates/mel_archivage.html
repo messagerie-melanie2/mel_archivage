@@ -17,12 +17,13 @@
 				<input type="hidden" value="plugin.mel_archivage_traitement" name="_action">
 				<div>
 					<label for="nb_jours" style="display: block; width: 120px; float: left;"><roundcube:label name="mel_archivage.nb_jours" /></label>
-					<input type="text" id="nb_jours" name="nb_jours" />
+					<input type="text" id="nb_jours" name="nb_jours" required/>
 				</div>
 				<div>
 					<label for="archivage_date" style="display: block; width: 120px; float: left;"><roundcube:label name="mel_archivage.date" /></label>
-					<input type="text" id="archivage_date"/>
+					<input type="text" id="archivage_date" required/>
 				</div>
+				<br>
 				<div id="nb_mails"></div>
 			</fieldset>
 			

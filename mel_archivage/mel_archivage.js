@@ -30,13 +30,19 @@ if (window.rcmail) {
                 _mbox: rcmail.env.mailbox,
             });
             rcmail.addEventListener('responseafterplugin.mel_archivage_avancement', function (evt) {
-                $('#nb_mails').text(evt.response.data + '/' + evt.response.data);
+                if (evt.response.data === 1) {
+                    parent.location.reload();
+                }
+                else {
+                    $("#nb_mails").text("Traitement en cours...");
+                }
             });
         }
-        
+
         $('#form_archivage').submit(function () {
+            $("#submit_archivage").prop("disabled", true);
             rcmail.http_get('settings/plugin.mel_archivage_reset');
-            setInterval(nbMails, 2000);
+            setInterval(nbMails, 10000);
         })
 
     });
@@ -67,6 +73,7 @@ rcube_webmail.prototype.plugin_archiver = function () {
     var buttons = {};
 
     frame.dialog({
+        dialogClass: 'archiver-dialog',
         modal: true,
         resizable: false,
         closeOnEscape: true,
