@@ -39,17 +39,17 @@ class mel_archivage extends rcube_plugin
             }
             $this->include_stylesheet($skin_path . '/css/mel_archivage.css');
             $this->include_script('mel_archivage.js');
-            $this->add_texts('localization', true);
+            $this->add_texts('localization/', true);
             $this->add_button(
                 array(
                     'type'     => 'link',
-                    'label'    => 'buttontext',
+                    'label'    => 'mel_archivage.buttontext',
                     'command'  => 'plugin_archiver',
                     'class'    => 'button buttonPas archive',
                     'classact' => 'button archive',
                     'width'    => 32,
                     'height'   => 32,
-                    'title'    => 'buttontitle',
+                    'title'    => 'mel_archivage.buttontitle',
                     'domain'   => $this->ID,
                     'innerclass' => 'inner',
                 ),
@@ -70,7 +70,7 @@ class mel_archivage extends rcube_plugin
         $rcmail->output->send('mel_archivage.mel_archivage');
     }
 
-    public function 1()
+    public function archivage_avancement()
     {
         header("Content-Type: application/json; charset=" . RCUBE_CHARSET);
 
@@ -88,6 +88,9 @@ class mel_archivage extends rcube_plugin
 
     public function traitement_archivage()
     {
+        if ($_SESSION['mel_archivage']['fin'] === 1) {
+            unset($_SESSION['mel_archivage']['fin']);
+        }
         $nbJours = rcube_utils::get_input_value('nb_jours', rcube_utils::INPUT_GET);
         $dateActuelle = new DateTime(date('Y-m-d'));
 
@@ -100,10 +103,16 @@ class mel_archivage extends rcube_plugin
         $storage->set_threading(false);
 
         $mbox           = $storage->get_folder();
-        $msg_count      = $storage->count();
+        $msg_count      = $storage->count(); 
         $page_size      = $storage->get_pagesize();
         $pages          = ceil($msg_count / $page_size);
 
+        //Si l'utilisateur est dans le dossier Messages Archivés
+        if ($mbox == $folder) {
+            $rcmail->output->show_message('mel_archivage.error_message_mails', 'error');
+            $rcmail->output->send('mel_archivage.mel_archivage');
+        }
+        
         $message_uid = array();
         $messageset = array();
         $break = false;
@@ -126,7 +135,14 @@ class mel_archivage extends rcube_plugin
             }
         }
 
-        $this->_download_messages($messageset);
+        if (count($messageset) > 0) {
+            $this->_download_messages($messageset);
+        }
+        else
+        {
+            $rcmail->output->show_message('mel_archivage.error_message_mails', 'error');
+            $rcmail->output->send('mel_archivage.mel_archivage');
+        }
 
         //Créer un folder "Mes messages archivés" si non existant
         if (isset($folder)) {
